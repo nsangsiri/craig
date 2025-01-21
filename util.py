@@ -23,8 +23,8 @@ import sklearn
 # from lazy_greedy import FacilityLocation, lazy_greedy, lazy_greedy_heap
 # from set_cover import SetCover
 
-from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
-from tensorflow.examples.tutorials.mnist import input_data
+# from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
+# from tensorflow.examples.tutorials.mnist import input_data
 
 SEED = 100
 EPS = 1E-8
@@ -64,14 +64,15 @@ def load_dataset(dataset, dataset_dir):
         path = os.path.join('grad_features.npy')
         X = np.load(path)  # shape [50000, 1000], type float16
     elif dataset == 'mnist':
-        mnist = input_data.read_data_sets('/tmp')
-        X_train = np.vstack([mnist.train.images, mnist.validation.images])
-        y_train = np.hstack([mnist.train.labels, mnist.validation.labels])
-        X_test = mnist.test.images
-        y_test = mnist.test.labels
-        X_train = X_train.astype(np.float32) / 255
-        X_test = X_test.astype(np.float32) / 255
-        return X_train, y_train, X_test, y_test
+        raise Exception("Sorry, we do not support mnist")
+        # mnist = input_data.read_data_sets('/tmp')
+        # X_train = np.vstack([mnist.train.images, mnist.validation.images])
+        # y_train = np.hstack([mnist.train.labels, mnist.validation.labels])
+        # X_test = mnist.test.images
+        # y_test = mnist.test.labels
+        # X_train = X_train.astype(np.float32) / 255
+        # X_test = X_test.astype(np.float32) / 255
+        # return X_train, y_train, X_test, y_test
 
     else:
         num, dim, name = 0, 0, ''
@@ -444,6 +445,7 @@ def get_orders_and_weights(B, X, metric, smtk, no=0, stoch_greedy=0, y=None, wei
     - weights_mg/_sz: np.array, shape [B], type float32, sums to 1
     '''
     N = X.shape[0]
+    print('n = ', X.shape[0])
     if y is None:
         y = np.zeros(N, dtype=np.int32)  # assign every point to the same class
     classes = np.unique(y)
@@ -487,8 +489,10 @@ def get_orders_and_weights(B, X, metric, smtk, no=0, stoch_greedy=0, y=None, wei
         print(f'Selecting with ratios {np.array(class_ratios)}')
         print(f'Class proportions {np.array(props)}')
 
-    order_mg_all = np.array(order_mg_all)
-    cluster_sizes_all = np.array(cluster_sizes_all)
+    # print("order_mg_all = ",  type(order_mg_all), order_mg_all)
+    # print("cluster_sizes_all = ", type(cluster_sizes_all), cluster_sizes_all)
+    order_mg_all = np.array(order_mg_all, dtype=object)
+    cluster_sizes_all = np.array(cluster_sizes_all, dtype=object)
     for i in range(int(np.rint(np.max([len(order_mg_all[c]) / props[c] for c in classes])))):
         for c in classes:
             ndx = slice(i * int(props[c]), int(min(len(order_mg_all[c]), (i + 1) * props[c])))

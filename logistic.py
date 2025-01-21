@@ -31,7 +31,7 @@ class LogisticRegression(object):
         self.binary = num_class == 1
         self.W = np.zeros((dim, num_class))  # initialize W 0
         self.b = np.zeros(num_class)  # initialize bias 0
-        self.params = np.array([self.W, self.b])
+        self.params = np.array([self.W, self.b], dtype=object)
 
     def activation(self, input, params=None):
         W, b = params if params is not None else self.params
@@ -63,7 +63,7 @@ class LogisticRegression(object):
         d_y = label - p_y_given_x
         d_W = -np.dot(np.reshape(input, (1, -1)).T, np.reshape(d_y.T, (1, -1))) - l2_reg * self.W
         d_b = -np.mean(d_y, axis=0)
-        return np.array([d_W, d_b])
+        return np.array([d_W, d_b], dtype=object)
 
 
 class Optimizer(object):
@@ -154,13 +154,13 @@ class Optimizer(object):
 
 
 def load_dataset(dataset, normalize=False):
-    DATASET_DIR = '/tmp/data/'
+    DATASET_DIR = './tmp/data/'
     if dataset == 'covtype':
         print(f'Loading {dataset}')
         X, y = util.load_dataset('covtype', DATASET_DIR)
         N = len(X)
-        NUM_TRAINING, NUM_VALIDATION = int(N / 2), int(N / 2) + int(N / 4)
-        # NUM_TRAINING, NUM_VALIDATION = int(N / 256), int(N / 256) + int(N / 512)
+        # NUM_TRAINING, NUM_VALIDATION = int(N / 2), int(N / 2) + int(N / 4)
+        NUM_TRAINING, NUM_VALIDATION = int(N / 256), int(N / 256) + int(N / 512)
         sample = np.arange(N)
         np.random.seed(0)
         np.random.shuffle(sample)
@@ -297,10 +297,13 @@ def get_param_range(subset_size, exp_decay, method, data):
 
 def test(method='sgd', data='covtype', exp_decay=1, subset_size=1., greedy=1, shuffle=0, g_cnt=-1.,
          b_cnt=-1., num_runs=10, metric='', reg=1e-5, rand='', num_epochs=-1, from_all=0):
+    print("[pass here 1]")
     if num_epochs == -1:
         num_epochs = 20 + int(np.ceil((1. / subset_size) * 5)) + 5 if subset_size < 1 else 20
     else:
         rand += f'_e{num_epochs}'
+
+    print("[pass here 2]")
 
     train_data, train_target, val_data, val_target, test_data, test_target = load_dataset(data)
     num_class = 1 if data in ['covtype', 'ijcnn1'] else 3
@@ -311,6 +314,9 @@ def test(method='sgd', data='covtype', exp_decay=1, subset_size=1., greedy=1, sh
         print(f'Running with b: {b_cnt}, g: {g_cnt}')
     else:
         g_range, b_range = get_param_range(subset_size, exp_decay, method, data)
+
+    print("[pass here]")
+
 
     folder = f'/tmp/{data}'
     x_runs_f = [[]] * num_runs
@@ -381,7 +387,8 @@ def test(method='sgd', data='covtype', exp_decay=1, subset_size=1., greedy=1, sh
                     acc_runs_f[itr, :] = [model.accuracy(test_data, test_target, x_f[j]) for j in range(num_epochs)]
                     print(f'Saving the results to {folder}_{method}_{subset_size}_{rand}_best_f_{metric}_w')
                     np.savez(f'{folder}_{method}_{subset_size}_{rand}_best_f_{metric}_w', g=g_f, b=b_f,
-                             X_all=x_runs_f, F_all=f_runs_f, T_all=t_runs_f, Acc_all=acc_runs_f, FT_all=ft_runs_f)
+                             X_all=np.array(x_runs_f, dtype=object), F_all=f_runs_f, T_all=t_runs_f, Acc_all=acc_runs_f, FT_all=ft_runs_f)
+
                 if acc_s > acc_best:
                     acc_best, x_a, g_a, b_a, t_a = acc_s, x_s, gamma, b, t_s
                     x_runs_a[itr] = x_a
@@ -391,20 +398,21 @@ def test(method='sgd', data='covtype', exp_decay=1, subset_size=1., greedy=1, sh
                     acc_runs_a[itr, :] = [model.accuracy(test_data, test_target, x_a[j]) for j in range(num_epochs)]
                     print(f'Saving the results to {folder}_{method}_{subset_size}_{rand}_best_acc_{metric}_w')
                     np.savez(f'{folder}_{method}_{subset_size}_{rand}_best_acc_{metric}_w', g=g_a, b=b_a,
-                             X_all=x_runs_a, F_all=f_runs_a, T_all=t_runs_a, Acc_all=acc_runs_a, FT_all=ft_runs_a)
+                             X_all=np.array(x_runs_a, dtype=object), F_all=f_runs_a, T_all=t_runs_a, Acc_all=acc_runs_a, FT_all=ft_runs_a)
                 print(f'Best solution is => f: {f_best}, a: {acc_best}, b_f: {b_f}, g_f: {g_f}, b_a: {b_a}, g_a: {g_a}')
 
         print(f'Saving the final results to {folder}_{method}_{subset_size}_{rand}_best_f_{metric}_w')
         np.savez(f'{folder}_{method}_{subset_size}_{rand}_best_f_{metric}_w', g=g_f, b=b_f,
-                 X_all=x_runs_f, F_all=f_runs_f, T_all=t_runs_f, Acc_all=acc_runs_f, FT_all=ft_runs_f)
+                 X_all=np.array(x_runs_f, dtype=object), F_all=f_runs_f, T_all=t_runs_f, Acc_all=acc_runs_f, FT_all=ft_runs_f)
         print(f'Saving the final results to {folder}_{method}_{subset_size}_{rand}_best_acc_{metric}_w')
         np.savez(f'{folder}_{method}_{subset_size}_{rand}_best_acc_{metric}_w', g=g_a, b=b_a,
-                 X_all=x_runs_a, F_all=f_runs_a, T_all=t_runs_a, Acc_all=acc_runs_a, FT_all=ft_runs_a)
+                 X_all=np.array(x_runs_a, dtype=object), F_all=f_runs_a, T_all=t_runs_a, Acc_all=acc_runs_a, FT_all=ft_runs_a)
 
     print('Finish')
 
 
 def gradient_difference(data, method, rand, metric, reg=1e-5):
+    print("pass here")
     folder = f'/tmp/{data}'
     train_data, train_target, val_data, val_target, test_data, test_target = load_dataset(data)
 
@@ -412,6 +420,7 @@ def gradient_difference(data, method, rand, metric, reg=1e-5):
     subsets = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     max_diffs = np.zeros((num_runs, len(subsets)))
     max_full_grad_norms = np.zeros((num_runs, len(subsets)))
+    print("pass here")
 
     for run in range(num_runs):
         for s in range(len(subsets)):
