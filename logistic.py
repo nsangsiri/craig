@@ -84,6 +84,8 @@ class Optimizer(object):
     def optimize(self, method, model, data, labels, weights, num_epochs, shuffle, lr, l2_reg):
         if method == 'sgd':
             return self.sgd(model, data, labels, weights, num_epochs, shuffle, lr, l2_reg)
+        elif method == 'gd':
+            return self.gd(model, data, labels, weights, num_epochs, shuffle, lr, l2_reg)
         elif method == 'saga':
             return self.saga(model, data, labels, weights, num_epochs, shuffle, lr, l2_reg)
         elif method == 'svrg':
@@ -104,6 +106,25 @@ class Optimizer(object):
             for i in indices:
                 grads = model.gradient(data[i], labels[i], l2_reg / n) * weights[i]
                 model.params -= lr[epoch] * grads
+            W[epoch] = model.params.copy()
+            T[epoch] = (time.process_time() - start_epoch)
+        return W, T
+    
+    def gd(self, model, data, labels, weights, num_epochs, shuffle, lr, l2_reg):
+        n = len(data)
+        W = [[]] * num_epochs
+        T = np.empty(num_epochs)
+
+        time.sleep(.1)
+        start_epoch = time.process_time()
+
+        # total_weight = sum(weights)
+
+        for epoch in range(num_epochs):
+            for i in range(n):
+                grads = model.gradient(data[i], labels[i], l2_reg / n) * weights[i]
+                model.params -= lr[epoch] * grads
+                # model.params -= lr[epoch] * grads / total_weight
             W[epoch] = model.params.copy()
             T[epoch] = (time.process_time() - start_epoch)
         return W, T
@@ -507,7 +528,7 @@ if __name__ == '__main__':
     p.add_argument('--reg', type=float, required=False, default=1e-5,
                    help='L2 regularization constant')
     p.add_argument('--method', type=str, required=False, default='sgd',
-                   choices=['sgd', 'svrg', 'saga'], help='sgd, svrg, saga')
+                   choices=['sgd', 'gd', 'svrg', 'saga'], help='sgd, gd, svrg, saga')
     p.add_argument('--subset_size', '-s', type=float, required=False,
                    help='size of the subset')
     p.add_argument('--shuffle', type=int, default=2,
